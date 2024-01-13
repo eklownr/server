@@ -1,5 +1,5 @@
+use std::io::{Error, Read, Write};
 use std::net::{TcpListener, TcpStream};
-use std::io::{Error, Read};
 
 fn handle_stream(mut stream: TcpStream) -> Result<(), Error> {
     let mut buffer = [0; 1024];
@@ -10,47 +10,19 @@ fn handle_stream(mut stream: TcpStream) -> Result<(), Error> {
         }
         let request = String::from_utf8_lossy(&buffer[..bytes_read]);
         println!("Received request: {}", request);
+
+        let response = "HTTP/1.1 200 OK\r
+                        \r<!DOCTYPE html><html><body><h1>
+                        Hello, from rust server!</h1></body></html>";
+        stream.write_all(response.as_bytes())?;
+        stream.flush()?;
     }
 }
 
-fn main() {
-    let listener: TcpListener = TcpListener::bind("127.0.0.1:7878").unwrap();
-
+fn main() -> Result<(), Error> {
+    let listener = TcpListener::bind("127.0.0.1:8080")?;
     for stream in listener.incoming() {
-        match stream {
-            Ok(stream) => {
-                println!("Connection established!");
-                if let Err(err) = handle_stream(stream) {
-                    eprintln!("Error handling stream: {}", err);
-                }
-            }
-            Err(err) => {
-                eprintln!("Error accepting connection: {}", err);
-            }
-        }
+        handle_stream(stream?)?;
     }
+    Ok(())
 }
-
-
-/*
-use std::net::{TcpListener, TcpStream};
-use std::io::{Error, Read};
-
-fn main() {
-    let listener: TcpListener =
-        TcpListener::bind("127.0.0.1:7878").unwrap(); 
-
-    for stream in listener.incoming() {
-        match stream {
-            Ok(stream) => {
-                println!("Connection established!");
-
-                // Handle stream here
-            }
-            Err(err) => {
-                eprintln!("Error accepting connection: {}", err);
-            }
-        }
-    }
-}
-*/
